@@ -1,0 +1,9 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam-xray"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1d56g9t11rqr0"
+s3_prefix = "sam-xray"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"

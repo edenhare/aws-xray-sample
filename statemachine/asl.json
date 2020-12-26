@@ -1,0 +1,131 @@
+{
+  "Comment": "Select a pair of friends for a virtual coffee break.",
+  "StartAt": "SelectFriends",
+  "States": {
+    "SelectFriends": {
+      "Type": "Task",
+      "Resource": "${SelectPairFunctionArn}",
+      "Next": "VerifyPair"
+    },
+    "VerifyPair": {
+      "Type": "Task",
+      "Resource": "${VerifyPairFunctionArn}",
+      "Next": "ValidPair"
+    },
+    "ValidPair": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.statusCode",
+              "NumericEquals": 200
+            },
+            {
+              "Variable": "$.body.first",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.body.second",
+              "IsPresent": true
+            }
+          ],
+          "Next": "SavePair"
+        },
+        {
+          "Variable": "$.statusCode",
+          "NumericEquals": 400,
+          "Next": "BadPair"
+        }
+      ]
+    },
+    "BadPair": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "Could not select pair"
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:548985610555:NotifyMe"
+      },
+      "End": true
+    },
+    "SavePair": {
+      "Type": "Task",
+      "Resource": "${SavePairFunctionArn}",
+      "Next": "SavedToDB"
+    },
+    "SavedToDB": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.statusCode",
+              "NumericEquals": 200
+            },
+            {
+              "Variable": "$.body.first",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.body.second",
+              "IsPresent": true
+            }
+          ],
+          "Next": "NotifyPair"
+        },
+        {
+          "Variable": "$.statusCode",
+          "NumericEquals": 400,
+          "Next": "SaveFail"
+        }
+      ]
+    },
+    "SaveFail": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "Could not save pair to database"
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:548985610555:NotifyMe"
+      },
+      "End": true
+    },
+    "NotifyPair": {
+      "Type": "Task",
+      "Resource": "${NotifyPairFunctionArn}",
+      "Next": "NotifyCheck"
+    },
+    "NotifyCheck": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.statusCode",
+          "NumericEquals": 200,
+          "Next": "Success"
+        },
+        {
+          "Variable": "$.statusCode",
+          "NumericEquals": 400,
+          "Next": "NotifyFail"
+        }
+      ]
+    },
+    "NotifyFail": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "Could not notify the pair"
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:548985610555:NotifyMe"
+      },
+      "End": true
+    },
+    "Success": {
+      "Type": "Succeed"
+    }
+  }
+}

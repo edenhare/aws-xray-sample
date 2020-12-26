@@ -1,6 +1,7 @@
 # ReadMe for SAM X-Ray Sample
 
 The files in this sample are:
+```
 
 ├── api
 ├── aws_xray_sdk
@@ -42,6 +43,8 @@ The files in this sample are:
 ├── statemachine
 ├── template.yaml
 └── xray-template.yaml
+
+```
 
 ## Buiding the Sample
 

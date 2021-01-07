@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'non-x-ray SAM template
+
+  '
+Resources:
+  StateMachineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: poc/statemachine
+      RetentionInDays: 14
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: poc/apigw
+      RetentionInDays: 14
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      - arn:aws:iam::aws:policy/AWSXrayFullAccess
+  StateMachineExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: states.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      - arn:aws:iam::aws:policy/AWSXrayFullAccess
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      - arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess
+      - arn:aws:iam::aws:policy/AWSXrayFullAccess
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      AccessLogSettings:
+        DestinationArn:
+          Fn::GetAtt:
+          - ApiLogGroup
+          - Arn
+        Format: $context.requestId
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ../../api/api.yaml
+  xray:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: aws-xray-sdk
+      Description: Dependencies for the blank sample app.
+      ContentUri: ../../aws_xray_sdk
+      CompatibleRuntimes:
+      - python3.7
+      - python3.8
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Type: STANDARD
+      Logging:
+        Destinations:
+        - CloudWatchLogsLogGroup:
+            LogGroupArn:
+              Fn::GetAtt:
+              - StateMachineLogGroup
+              - Arn
+        Level: ALL
+      DefinitionUri: ../../statemachine/asl.json
+      Role:
+        Fn::GetAtt:
+        - StateMachineExecutionRole
+        - Arn
+      Tracing:
+        Enabled: true
+      DefinitionSubstitutions:
+        SelectPairFunctionArn:
+          Fn::GetAtt:
+          - SelectPair
+          - Arn
+        VerifyPairFunctionArn:
+          Fn::GetAtt:
+          - VerifyPair
+          - Arn
+        SavePairFunctionArn:
+          Fn::GetAtt:
+          - SavePair
+          - Arn
+        NotifyPairFunctionArn:
+          Fn::GetAtt:
+          - NotifyPair
+          - Arn
+  SelectPair:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: SelectPair
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Tracing: Active
+      Layers:
+      - Ref: xray
+  VerifyPair:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: VerifyPair
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Tracing: Active
+      Layers:
+      - Ref: xray
+  SavePair:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: SavePair
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Tracing: Active
+      Layers:
+      - Ref: xray
+  NotifyPair:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: NotifyPair
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Tracing: Active
+      Layers:
+      - Ref: xray

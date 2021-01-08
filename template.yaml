@@ -107,7 +107,7 @@ Resources:
   SelectPair:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/poc-select-pair/
+      CodeUri: functions/poc_select_pair/
       Handler: app.lambda_handler
       Runtime: python3.7
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -118,7 +118,7 @@ Resources:
   VerifyPair:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/poc-verify-pair/
+      CodeUri: functions/poc_verify_pair/
       Handler: app.lambda_handler
       Runtime: python3.7
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -129,7 +129,7 @@ Resources:
   SavePair:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/poc-save-db/
+      CodeUri: functions/poc_save_db/
       Handler: app.lambda_handler
       Runtime: python3.7
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -140,7 +140,7 @@ Resources:
   NotifyPair:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/poc-notify-pair/
+      CodeUri: functions/poc_notify_pair/
       Handler: app.lambda_handler
       Runtime: python3.7
       Role: !GetAtt LambdaExecutionRole.Arn

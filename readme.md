@@ -1,5 +1,8 @@
 # ReadMe for SAM X-Ray Sample
 
+This sample code is for the Medium Article "[Debugging AWS Lambda
+Functrions with AWS X-Ray](https://levelup.gitconnected.com/debugging-aws-lambda-functions-with-aws-x-ray-ad4dce87a797)".
+
 The files in this sample are:
 ```
 
